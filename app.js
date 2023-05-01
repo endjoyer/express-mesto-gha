@@ -1,11 +1,23 @@
 const path = require('path');
 const express = require('express');
 const mongoose = require('mongoose');
+const rateLimit = require('express-rate-limit');
+var helmet = require('helmet');
 const routesUsers = require('./routes/users');
 const routesCards = require('./routes/cards');
 
 const { PORT = 3000 } = process.env;
 const app = express();
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 500,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use(limiter);
+app.use(helmet());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

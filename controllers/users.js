@@ -47,16 +47,17 @@ module.exports.createUser = (req, res) => {
 };
 
 module.exports.patchUserProfile = (req, res) => {
-  const { id } = req.user;
+  const id = req.user._id;
   const { name, about } = req.body;
 
-  User.updateOne(id, { name, about }, { new: true, runValidators: true })
+  User.findByIdAndUpdate(
+    id,
+    { name, about },
+    { new: true, runValidators: true },
+  )
     .then((user) => {
-      if (!user) {
-        res.status(404).send({ message: 'User not found' });
-      } else {
-        res.send(user);
-      }
+      console.log(id);
+      res.send(user);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
@@ -68,7 +69,7 @@ module.exports.patchUserProfile = (req, res) => {
 };
 
 module.exports.patchUserAvatar = (req, res) => {
-  const { id } = req.user;
+  const id = req.user._id;
   const { avatar } = req.body;
 
   User.updateOne(id, { avatar }, { new: true, runValidators: true })

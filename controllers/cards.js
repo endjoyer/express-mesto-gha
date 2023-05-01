@@ -28,7 +28,7 @@ module.exports.createCard = (req, res) => {
 
 module.exports.deleteCardById = (req, res) => {
   const { id } = req.params;
-  Card.findByIdAndRemove(id)
+  Card.findByIdAndRemove(id, { new: true, runValidators: true })
     .then((card) => {
       if (!card) {
         res.status(404).send({ message: 'Card not found' });
@@ -36,7 +36,13 @@ module.exports.deleteCardById = (req, res) => {
         res.send(card);
       }
     })
-    .catch((err) => res.status(500).send({ message: err.message }));
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        res.status(400).send({ message: 'Cast to ObjectId failed' });
+      } else {
+        res.status(500).send({ message: err.message });
+      }
+    });
 };
 module.exports.likeCard = (req, res) => {
   const { cardId } = req.params;

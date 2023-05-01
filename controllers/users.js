@@ -1,16 +1,13 @@
 const User = require('../models/user');
 
+const ERROR_IMPUT = 400;
+const ERROR_FIND = 404;
+const ERROR_SERVER = 500;
+
 module.exports.getUsers = (req, res) => {
   User.find({})
-    .then((user) => {
-      if (user.length === 0) {
-        res.status(404).send({ message: 'Users not found' });
-      } else {
-        res.send(user);
-      }
-    })
-    .catch((err) => res.status(500).send({ message: err.message }));
-  // Мне кажется, что такое сообщение более информативное и полезное, но вероятно я не прав )
+    .then((cards) => res.send(cards))
+    .catch(() => res.status(ERROR_SERVER).send({ message: 'Server error' }));
 };
 
 module.exports.getUserById = (req, res) => {
@@ -18,16 +15,16 @@ module.exports.getUserById = (req, res) => {
   User.findById(id)
     .then((user) => {
       if (!user) {
-        res.status(404).send({ message: 'User not found' });
+        res.status(ERROR_FIND).send({ message: 'User not found' });
       } else {
         res.send(user);
       }
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(400).send({ message: 'Cast to ObjectId failed' });
+        res.status(ERROR_IMPUT).send({ message: 'Cast to ObjectId failed' });
       } else {
-        res.status(500).send({ message: err.message });
+        res.status(ERROR_SERVER).send({ message: 'Server error' });
       }
     });
 };
@@ -39,9 +36,11 @@ module.exports.createUser = (req, res) => {
     .then((user) => res.send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(400).send({ message: 'Incorrect data was transmitted' });
+        res
+          .status(ERROR_IMPUT)
+          .send({ message: 'Incorrect data was transmitted' });
       } else {
-        res.status(500).send({ message: err.message });
+        res.status(ERROR_SERVER).send({ message: 'Server error' });
       }
     });
 };
@@ -56,14 +55,15 @@ module.exports.patchUserProfile = (req, res) => {
     { new: true, runValidators: true },
   )
     .then((user) => {
-      console.log(id);
       res.send(user);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(400).send({ message: 'Incorrect data was transmitted' });
+        res
+          .status(ERROR_IMPUT)
+          .send({ message: 'Incorrect data was transmitted' });
       } else {
-        res.status(500).send({ message: err.message });
+        res.status(ERROR_SERVER).send({ message: 'Server error' });
       }
     });
 };
@@ -75,16 +75,18 @@ module.exports.patchUserAvatar = (req, res) => {
   User.findByIdAndUpdate(id, { avatar }, { new: true, runValidators: true })
     .then((user) => {
       if (!user) {
-        res.status(404).send({ message: 'User not found' });
+        res.status(ERROR_FIND).send({ message: 'User not found' });
       } else {
         res.send(user);
       }
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(400).send({ message: 'Incorrect data was transmitted' });
+        res
+          .status(ERROR_IMPUT)
+          .send({ message: 'Incorrect data was transmitted' });
       } else {
-        res.status(500).send({ message: err.message });
+        res.status(ERROR_SERVER).send({ message: 'Server error' });
       }
     });
 };

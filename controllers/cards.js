@@ -16,14 +16,14 @@ module.exports.createCard = (req, res) => {
   const { name, link } = req.body;
   const owner = req.user._id;
   Card.create({ name, link, owner })
-    .then((card) => {
-      if (!card) {
+    .then((card) => res.send(card))
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
         res.status(400).send({ message: 'Incorrect data was transmitted' });
       } else {
-        res.send(card);
+        res.status(500).send({ message: err.message });
       }
-    })
-    .catch((err) => res.status(500).send({ message: err.message }));
+    });
 };
 
 module.exports.deleteCardById = (req, res) => {
@@ -52,7 +52,13 @@ module.exports.likeCard = (req, res) => {
         res.send(card);
       }
     })
-    .catch((err) => res.status(500).send({ message: err.message }));
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        res.status(400).send({ message: 'Cast to ObjectId failed' });
+      } else {
+        res.status(500).send({ message: err.message });
+      }
+    });
 };
 
 module.exports.dislikeCard = (req, res) => {
@@ -69,5 +75,11 @@ module.exports.dislikeCard = (req, res) => {
         res.send(card);
       }
     })
-    .catch((err) => res.status(500).send({ message: err.message }));
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        res.status(400).send({ message: 'Cast to ObjectId failed' });
+      } else {
+        res.status(500).send({ message: err.message });
+      }
+    });
 };

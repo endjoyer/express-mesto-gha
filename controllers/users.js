@@ -23,30 +23,34 @@ module.exports.getUserById = (req, res) => {
         res.send(user);
       }
     })
-    .catch((err) => res.status(500).send({ message: err.message }));
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        res.status(400).send({ message: 'Cast to ObjectId failed' });
+      } else {
+        res.status(500).send({ message: err.message });
+      }
+    });
 };
 
 module.exports.createUser = (req, res) => {
   const { name, about, avatar } = req.body;
 
   User.create({ name, about, avatar })
-    .then((user) => {
-      if (!user) {
-        res.status(400).send({
-          message: 'Incorrect data was transmitted',
-        });
+    .then((user) => res.send(user))
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        res.status(400).send({ message: 'Incorrect data was transmitted' });
       } else {
-        res.send(user);
+        res.status(500).send({ message: err.message });
       }
-    })
-    .catch((err) => res.status(500).send({ message: err.message }));
+    });
 };
 
 module.exports.patchUserProfile = (req, res) => {
   const { id } = req.user;
-  const { name } = req.body;
+  const { name, about } = req.body;
 
-  User.updateOne(id, { name }, { new: true, runValidators: true })
+  User.updateOne(id, { name, about }, { new: true, runValidators: true })
     .then((user) => {
       if (!user) {
         res.status(404).send({ message: 'User not found' });
@@ -54,7 +58,13 @@ module.exports.patchUserProfile = (req, res) => {
         res.send(user);
       }
     })
-    .catch((err) => res.status(500).send({ message: err.message }));
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        res.status(400).send({ message: 'Incorrect data was transmitted' });
+      } else {
+        res.status(500).send({ message: err.message });
+      }
+    });
 };
 
 module.exports.patchUserAvatar = (req, res) => {
@@ -69,5 +79,11 @@ module.exports.patchUserAvatar = (req, res) => {
         res.send(user);
       }
     })
-    .catch((err) => res.status(500).send({ message: err.message }));
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        res.status(400).send({ message: 'Incorrect data was transmitted' });
+      } else {
+        res.status(500).send({ message: err.message });
+      }
+    });
 };

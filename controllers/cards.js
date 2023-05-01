@@ -28,17 +28,18 @@ module.exports.createCard = (req, res) => {
 
 module.exports.deleteCardById = (req, res) => {
   const { id } = req.params;
-  Card.findByIdAndRemove(id, { new: true, runValidators: true })
+  Card.findByIdAndRemove(id) // Если карточки нет в базе данных, то возвращается null
     .then((card) => {
+      console.log(card);
       if (!card) {
-        res.status(404).send({ message: 'Card not found' });
+        res.status(404).send({ message: 'Card not found' }); // Если возвращается null, то выдает ошибку 404, но тесты ругаются. Я думаю так быть не должно.
       } else {
         res.send(card);
       }
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(400).send({ message: 'Cast to ObjectId failed' });
+        res.status(400).send({ message: 'Cast to ObjectId failed' }); // Выдает её, когда в неправильной форме введен id
       } else {
         res.status(500).send({ message: err.message });
       }

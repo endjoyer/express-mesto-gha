@@ -72,7 +72,7 @@ module.exports.patchUserAvatar = (req, res) => {
   const id = req.user._id;
   const { avatar } = req.body;
 
-  User.updateOne(id, { avatar }, { new: true, runValidators: true })
+  User.findByIdAndUpdate(id, { avatar }, { new: true, runValidators: true })
     .then((user) => {
       if (!user) {
         res.status(404).send({ message: 'User not found' });

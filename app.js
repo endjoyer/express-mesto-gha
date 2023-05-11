@@ -33,7 +33,7 @@ mongoose
 
 app.use((req, res, next) => {
   req.user = {
-    _id: '644e158816a561d56aa7c1a1',
+    _id: '645ce9792bf09af4fb4e9cd2',
   };
 
   next();
@@ -46,6 +46,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use((req, res) => {
   res.status(404).send({ message: 'Not Found' });
+});
+
+app.use((err, req, res, next) => {
+  const { statusCode = 500, message } = err;
+
+  res.status(statusCode).send({
+    message: statusCode === 500 ? 'Server error' : message,
+  });
 });
 
 app.listen(PORT, () => {

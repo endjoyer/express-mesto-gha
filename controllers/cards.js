@@ -1,13 +1,25 @@
 const Card = require('../models/card');
+const Unauthorized = require('../errors/unauthorized');
+const BadRequest = require('../errors/bad-request');
+const NotFoundError = require('../errors/not-found-err');
 
+const handleBadRequestError = () => {
+  throw new BadRequest('Cast to ObjectId failed');
+};
+
+const handleNotFoundErrorError = () => {
+  throw new NotFoundError('Cast to ObjectId failed');
+};
+
+const ERROR_UNAUTHORIZED = 401;
 const ERROR_IMPUT = 400;
 const ERROR_FIND = 404;
 const ERROR_SERVER = 500;
 
-module.exports.getCards = (req, res) => {
+module.exports.getCards = (req, res, next) => {
   Card.find({})
     .then((cards) => res.send(cards))
-    .catch(() => res.status(ERROR_SERVER).send({ message: 'Server error' }));
+    .catch(next);
 };
 
 module.exports.createCard = (req, res) => {
@@ -17,9 +29,7 @@ module.exports.createCard = (req, res) => {
     .then((card) => res.send(card))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res
-          .status(ERROR_IMPUT)
-          .send({ message: 'Incorrect data was transmitted' });
+        throw new BadRequest('Incorrect data was transmitted');
       } else {
         res.status(ERROR_SERVER).send({ message: 'Server error' });
       }
@@ -27,11 +37,15 @@ module.exports.createCard = (req, res) => {
 };
 
 module.exports.deleteCardById = (req, res) => {
+  const idUser = req.user._id;
   const { id } = req.params;
-  Card.findByIdAndRemove(id) // Если карточки нет в базе данных, то возвращается null
+  console.log(req.params);
+  Card.findByIdAndRemove(id)
     .then((card) => {
       if (!card) {
-        res.status(ERROR_FIND).send({ message: 'Card not found' }); // Если возвращается null, то выдает ошибку 404, но тесты ругаются. Я думаю так быть не должно.
+        res.status(ERROR_FIND).send({ message: 'Card not found' });
+      } else if (card.owner !== idUser) {
+        throw new Unauthorized('Denial of access');
       } else {
         res.send(card);
       }

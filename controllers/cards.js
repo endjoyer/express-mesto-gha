@@ -8,13 +8,8 @@ const handleBadRequestError = () => {
 };
 
 const handleNotFoundErrorError = () => {
-  throw new NotFoundError('Cast to ObjectId failed');
+  throw new NotFoundError('Card not found');
 };
-
-const ERROR_UNAUTHORIZED = 401;
-const ERROR_IMPUT = 400;
-const ERROR_FIND = 404;
-const ERROR_SERVER = 500;
 
 module.exports.getCards = (req, res, next) => {
   Card.find({})
@@ -22,7 +17,7 @@ module.exports.getCards = (req, res, next) => {
     .catch(next);
 };
 
-module.exports.createCard = (req, res) => {
+module.exports.createCard = (req, res, next) => {
   const { name, link } = req.body;
   const owner = req.user._id;
   Card.create({ name, link, owner })
@@ -30,20 +25,19 @@ module.exports.createCard = (req, res) => {
     .catch((err) => {
       if (err.name === 'ValidationError') {
         throw new BadRequest('Incorrect data was transmitted');
-      } else {
-        res.status(ERROR_SERVER).send({ message: 'Server error' });
       }
-    });
+    })
+    .catch(next);
 };
 
-module.exports.deleteCardById = (req, res) => {
+module.exports.deleteCardById = (req, res, next) => {
   const idUser = req.user._id;
   const { id } = req.params;
   console.log(req.params);
   Card.findByIdAndRemove(id)
     .then((card) => {
       if (!card) {
-        res.status(ERROR_FIND).send({ message: 'Card not found' });
+        handleNotFoundErrorError();
       } else if (card.owner !== idUser) {
         throw new Unauthorized('Denial of access');
       } else {
@@ -52,13 +46,12 @@ module.exports.deleteCardById = (req, res) => {
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(ERROR_IMPUT).send({ message: 'Cast to ObjectId failed' }); // Выдает её, когда в неправильной форме введен id
-      } else {
-        res.status(ERROR_SERVER).send({ message: 'Server error' });
+        handleBadRequestError();
       }
-    });
+    })
+    .catch(next);
 };
-module.exports.likeCard = (req, res) => {
+module.exports.likeCard = (req, res, next) => {
   const { cardId } = req.params;
   Card.findByIdAndUpdate(
     cardId,
@@ -67,21 +60,20 @@ module.exports.likeCard = (req, res) => {
   )
     .then((card) => {
       if (!card) {
-        res.status(ERROR_FIND).send({ message: 'Card not found' });
+        handleNotFoundErrorError();
       } else {
         res.send(card);
       }
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(ERROR_IMPUT).send({ message: 'Cast to ObjectId failed' });
-      } else {
-        res.status(ERROR_SERVER).send({ message: 'Server error' });
+        handleBadRequestError();
       }
-    });
+    })
+    .catch(next);
 };
 
-module.exports.dislikeCard = (req, res) => {
+module.exports.dislikeCard = (req, res, next) => {
   const { cardId } = req.params;
   Card.findByIdAndUpdate(
     cardId,
@@ -90,16 +82,15 @@ module.exports.dislikeCard = (req, res) => {
   )
     .then((card) => {
       if (!card) {
-        res.status(ERROR_FIND).send({ message: 'Card not found' });
+        handleNotFoundErrorError();
       } else {
         res.send(card);
       }
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(ERROR_IMPUT).send({ message: 'Cast to ObjectId failed' });
-      } else {
-        res.status(ERROR_SERVER).send({ message: 'Server error' });
+        handleBadRequestError();
       }
-    });
+    })
+    .catch(next);
 };

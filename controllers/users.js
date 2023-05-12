@@ -2,38 +2,28 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 
-const ERROR_IMPUT = 400;
-const ERROR_FIND = 404;
-const ERROR_SERVER = 500;
+const BadRequest = require('../errors/bad-request');
+const NotFoundError = require('../errors/not-found-err');
 
-module.exports.getUsers = (req, res) => {
-  User.find({})
-    .then((cards) => res.send(cards))
-    .catch(() => res.status(ERROR_SERVER).send({ message: 'Server error' }));
+const handleCastError = () => {
+  throw new BadRequest('Cast to ObjectId failed');
 };
 
-// module.exports.getUserById = (req, res) => {
-//   const { id } = req.params;
-//   console.log(id);
+const handleIncorrectDataError = () => {
+  throw new BadRequest('Incorrect data was transmitted');
+};
 
-//   User.findById(id)
-//     .then((user) => {
-//       if (!user) {
-//         res.status(ERROR_FIND).send({ message: 'User not found' });
-//       } else {
-//         res.send(user);
-//       }
-//     })
-//     .catch((err) => {
-//       if (err.name === 'CastError') {
-//         res.status(ERROR_IMPUT).send({ message: 'Cast to ObjectId failed' });
-//       } else {
-//         res.status(ERROR_SERVER).send({ message: 'Server error' });
-//       }
-//     });
-// };
+const handleNotFoundErrorError = () => {
+  throw new NotFoundError('User not found');
+};
 
-module.exports.createUser = (req, res) => {
+module.exports.getUsers = (req, res, next) => {
+  User.find({})
+    .then((cards) => res.send(cards))
+    .catch(next);
+};
+
+module.exports.createUser = (req, res, next) => {
   const { name, about, avatar } = req.body; // не забыть подправить email и password
   bcrypt
     .hash(req.body.password, 10)
@@ -48,38 +38,35 @@ module.exports.createUser = (req, res) => {
     })
     .then((user) => res.send(user))
     .catch((err) => {
+      // нужно будет учесть 409 ошибку!!!
       if (err.name === 'ValidationError') {
-        res
-          .status(ERROR_IMPUT)
-          .send({ message: 'Incorrect data was transmitted' });
-      } else {
-        res.status(ERROR_SERVER).send({ message: 'Server error' });
+        handleIncorrectDataError();
       }
-    });
+    })
+    .catch(next);
 };
 
-module.exports.getUserInfo = (req, res) => {
+module.exports.getUserInfo = (req, res, next) => {
   const id = req.user._id;
   console.log(id);
 
   User.findById(id)
     .then((user) => {
       if (!user) {
-        res.status(ERROR_FIND).send({ message: 'User not found' });
+        handleNotFoundErrorError();
       } else {
         res.send(user);
       }
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(ERROR_IMPUT).send({ message: 'Cast to ObjectId failed' });
-      } else {
-        res.status(ERROR_SERVER).send({ message: 'Server error' });
+        handleCastError();
       }
-    });
+    })
+    .catch(next);
 };
 
-module.exports.patchUserProfile = (req, res) => {
+module.exports.patchUserProfile = (req, res, next) => {
   const id = req.user._id;
   const { name, about } = req.body;
 
@@ -93,39 +80,33 @@ module.exports.patchUserProfile = (req, res) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res
-          .status(ERROR_IMPUT)
-          .send({ message: 'Incorrect data was transmitted' });
-      } else {
-        res.status(ERROR_SERVER).send({ message: 'Server error' });
+        handleCastError();
       }
-    });
+    })
+    .catch(next);
 };
 
-module.exports.patchUserAvatar = (req, res) => {
+module.exports.patchUserAvatar = (req, res, next) => {
   const id = req.user._id;
   const { avatar } = req.body;
 
   User.findByIdAndUpdate(id, { avatar }, { new: true, runValidators: true })
     .then((user) => {
       if (!user) {
-        res.status(ERROR_FIND).send({ message: 'User not found' });
+        handleNotFoundErrorError();
       } else {
         res.send(user);
       }
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res
-          .status(ERROR_IMPUT)
-          .send({ message: 'Incorrect data was transmitted' });
-      } else {
-        res.status(ERROR_SERVER).send({ message: 'Server error' });
+        handleIncorrectDataError();
       }
-    });
+    })
+    .catch(next);
 };
 
-module.exports.login = (req, res) => {
+module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
 
   // нужно улучшить безопасность!!!
@@ -140,6 +121,9 @@ module.exports.login = (req, res) => {
       console.log(req.user._id);
     })
     .catch((err) => {
-      res.status(401).send({ message: err.message });
-    });
+      if (err.name === 'CastError') {
+        handleCastError();
+      }
+    })
+    .catch(next);
 };

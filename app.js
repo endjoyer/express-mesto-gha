@@ -31,14 +31,6 @@ mongoose
     console.error('Database connection error:', err.message);
   });
 
-app.use((req, res, next) => {
-  req.user = {
-    _id: '645ce9792bf09af4fb4e9cd2',
-  };
-
-  next();
-});
-
 app.use(routesUsers);
 app.use(routesCards);
 

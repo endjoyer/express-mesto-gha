@@ -15,10 +15,6 @@ router.get('/users', auth, getUsers);
 
 router.get('/users/me', auth, getUserInfo);
 
-// router.get('/users/:id', getUserById);
-
-// router.post('/users', createUser);
-
 router.post('/signup', createUser);
 
 router.patch('/users/me', auth, patchUserProfile);

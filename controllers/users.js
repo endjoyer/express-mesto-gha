@@ -1,3 +1,4 @@
+require('dotenv').config();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
@@ -26,9 +27,9 @@ module.exports.getUserInfo = (req, res, next) => {
   User.findById(userId)
     .then((user) => {
       if (!user) {
-        return next(new NotFoundError('Invalid user request data'));
+        return next(new NotFoundError(`There is no user with id "${userId}"`));
       }
-      return res.status(200).send(user);
+      return res.send(user);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
@@ -36,17 +37,26 @@ module.exports.getUserInfo = (req, res, next) => {
       }
 
       if (err.name === 'DocumentNotFoundError') {
-        return next(new NotFoundError('Invalid user request data'));
+        return next(new NotFoundError(`There is no user with id "${userId}"`));
       }
 
-      return next(res);
+      return next(err);
     });
 };
 
 module.exports.createUser = (req, res, next) => {
   const { name, about, avatar, email, password } = req.body;
+  const MIN_PASSWORD_LENGTH = 8;
 
-  bcrypt
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    return next(
+      new BadRequestError(
+        `Password must be at least ${MIN_PASSWORD_LENGTH} characters long`,
+      ),
+    );
+  }
+
+  return bcrypt
     .hash(password, 10)
     .then((hash) =>
       User.create({
@@ -60,7 +70,7 @@ module.exports.createUser = (req, res, next) => {
     .then((user) => {
       const userObj = user.toObject();
       delete userObj.password;
-      res.status(201).send(userObj);
+      res.send(userObj);
     })
     .catch((err) => {
       if (err.code === 11000) {
@@ -69,7 +79,7 @@ module.exports.createUser = (req, res, next) => {
         );
       }
       if (err.name === 'ValidationError') {
-        return next(new NotFoundError('Invalid user request data'));
+        return next(new BadRequestError('Invalid user request data'));
       }
 
       return next(err);
@@ -85,14 +95,15 @@ module.exports.patchUserProfile = (req, res, next) => {
     { name, about },
     { new: true, runValidators: true },
   )
-    .then((user) => res.status(200).send(user))
+    .orFail()
+    .then((user) => res.send(user))
     .catch((err) => {
-      if (err.name === 'CastError') {
-        return next(new BadRequestError('Cast to ObjectId failed'));
+      if (err.name === 'CastError' || err.name === 'ValidationError') {
+        return next(new BadRequestError('Invalid user request data'));
       }
 
-      if (err.name === 'ValidationError') {
-        return next(new NotFoundError('Invalid user request data'));
+      if (err.name === 'DocumentNotFoundError') {
+        return next(new NotFoundError(`There is no user with id "${id}"`));
       }
 
       return next(err);
@@ -104,14 +115,15 @@ module.exports.patchUserAvatar = (req, res, next) => {
   const { avatar } = req.body;
 
   User.findByIdAndUpdate(id, { avatar }, { new: true, runValidators: true })
-    .then((user) => res.status(200).send(user))
+    .orFail()
+    .then((user) => res.send(user))
     .catch((err) => {
-      if (err.name === 'CastError') {
-        return next(new BadRequestError('Cast to ObjectId failed'));
+      if (err.name === 'CastError' || err.name === 'ValidationError') {
+        return next(new BadRequestError('Invalid user request data'));
       }
 
       if (err.name === 'DocumentNotFoundError') {
-        return next(new NotFoundError('Invalid user request data'));
+        return next(new NotFoundError(`There is no user with id "${id}"`));
       }
 
       return next(err);
@@ -121,7 +133,7 @@ module.exports.patchUserAvatar = (req, res, next) => {
 module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
 
-  return User.findOne({ email })
+  User.findOne({ email })
     .select('+password')
     .then((user) => {
       if (!user) {
@@ -133,7 +145,7 @@ module.exports.login = (req, res, next) => {
           return next(new UnauthorizedError('Incorrect email or password'));
         }
 
-        const token = jwt.sign({ _id: user._id }, 'secret-key', {
+        const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
           expiresIn: '7d',
         });
         res.cookie('jwt', token, {
@@ -141,8 +153,12 @@ module.exports.login = (req, res, next) => {
           httpOnly: true,
           sameSite: true,
         });
-        return res.status(200).send({ token });
+        return res.send({ token });
       });
     })
     .catch(next);
+};
+
+module.exports.exit = (req, res) => {
+  res.clearCookie('jwt').send({ message: 'Exit' });
 };

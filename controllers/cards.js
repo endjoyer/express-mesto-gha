@@ -31,11 +31,10 @@ module.exports.createCard = (req, res, next) => {
 
 module.exports.deleteCardById = (req, res, next) => {
   const UserId = req.user._id;
-  const { id } = req.params;
+  const { cardId } = req.params;
 
-  Card.findByIdAndRemove(id)
+  Card.findByIdAndRemove(cardId)
     .then((card) => {
-      console.log(req.params);
       if (!card) {
         handleNotFoundError();
       }

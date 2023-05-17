@@ -2,7 +2,7 @@ const { celebrate, Joi } = require('celebrate');
 
 const urlRegex = require('../utils/regex');
 
-const cardJoiTemplate = { id: Joi.string().length(24).hex().required() };
+const cardJoiTemplate = { cardId: Joi.string().length(24).hex().required() };
 
 const validateCreateUser = celebrate({
   body: Joi.object().keys({

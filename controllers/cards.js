@@ -1,50 +1,60 @@
 const Card = require('../models/card');
+const { NotFoundError, ForbiddenError, BadRequestError } = require('../errors');
 
-const ERROR_IMPUT = 400;
-const ERROR_FIND = 404;
-const ERROR_SERVER = 500;
-
-module.exports.getCards = (req, res) => {
-  Card.find({})
-    .then((cards) => res.send(cards))
-    .catch(() => res.status(ERROR_SERVER).send({ message: 'Server error' }));
+const handleBadRequestError = () => {
+  throw new BadRequestError('Cast to ObjectId failed');
 };
 
-module.exports.createCard = (req, res) => {
+const handleNotFoundError = () => {
+  throw new NotFoundError('Invalid card request data');
+};
+
+module.exports.getCards = (req, res, next) => {
+  Card.find({})
+    .then((cards) => res.send(cards))
+    .catch(next);
+};
+
+module.exports.createCard = (req, res, next) => {
   const { name, link } = req.body;
   const owner = req.user._id;
   Card.create({ name, link, owner })
     .then((card) => res.send(card))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res
-          .status(ERROR_IMPUT)
-          .send({ message: 'Incorrect data was transmitted' });
-      } else {
-        res.status(ERROR_SERVER).send({ message: 'Server error' });
+        return next(handleNotFoundError());
       }
+
+      return next(err);
     });
 };
 
-module.exports.deleteCardById = (req, res) => {
-  const { id } = req.params;
-  Card.findByIdAndRemove(id) // Если карточки нет в базе данных, то возвращается null
+module.exports.deleteCardById = (req, res, next) => {
+  const UserId = req.user._id;
+  const cardId = req.params.id;
+
+  Card.findByIdAndRemove(cardId)
     .then((card) => {
+      console.log(req.params);
       if (!card) {
-        res.status(ERROR_FIND).send({ message: 'Card not found' }); // Если возвращается null, то выдает ошибку 404, но тесты ругаются. Я думаю так быть не должно.
-      } else {
-        res.send(card);
+        handleNotFoundError();
       }
+      if (card.owner.toString() !== UserId) {
+        return next(
+          new ForbiddenError("You can't delete someone else's picture"),
+        );
+      }
+      return res.status(200).send(card);
     })
     .catch((err) => {
+      console.log(err);
       if (err.name === 'CastError') {
-        res.status(ERROR_IMPUT).send({ message: 'Cast to ObjectId failed' }); // Выдает её, когда в неправильной форме введен id
-      } else {
-        res.status(ERROR_SERVER).send({ message: 'Server error' });
+        handleBadRequestError();
       }
+      return next(err);
     });
 };
-module.exports.likeCard = (req, res) => {
+module.exports.likeCard = (req, res, next) => {
   const { cardId } = req.params;
   Card.findByIdAndUpdate(
     cardId,
@@ -53,21 +63,19 @@ module.exports.likeCard = (req, res) => {
   )
     .then((card) => {
       if (!card) {
-        res.status(ERROR_FIND).send({ message: 'Card not found' });
-      } else {
-        res.send(card);
+        handleNotFoundError();
       }
+      return res.send(card);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(ERROR_IMPUT).send({ message: 'Cast to ObjectId failed' });
-      } else {
-        res.status(ERROR_SERVER).send({ message: 'Server error' });
+        handleBadRequestError();
       }
+      return next(err);
     });
 };
 
-module.exports.dislikeCard = (req, res) => {
+module.exports.dislikeCard = (req, res, next) => {
   const { cardId } = req.params;
   Card.findByIdAndUpdate(
     cardId,
@@ -76,16 +84,18 @@ module.exports.dislikeCard = (req, res) => {
   )
     .then((card) => {
       if (!card) {
-        res.status(ERROR_FIND).send({ message: 'Card not found' });
-      } else {
-        res.send(card);
+        handleNotFoundError();
       }
+      return res.send(card);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(ERROR_IMPUT).send({ message: 'Cast to ObjectId failed' });
-      } else {
-        res.status(ERROR_SERVER).send({ message: 'Server error' });
+        handleBadRequestError();
       }
+
+      if (err.name === 'ValidationError') {
+        handleNotFoundError();
+      }
+      return next(err);
     });
 };

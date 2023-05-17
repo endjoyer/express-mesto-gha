@@ -1,51 +1,82 @@
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/user');
+const {
+  NotFoundError,
+  UnauthorizedError,
+  BadRequestError,
+  ConflictError,
+} = require('../errors');
 
-const ERROR_IMPUT = 400;
-const ERROR_FIND = 404;
-const ERROR_SERVER = 500;
-
-module.exports.getUsers = (req, res) => {
+module.exports.getUsers = (req, res, next) => {
   User.find({})
-    .then((cards) => res.send(cards))
-    .catch(() => res.status(ERROR_SERVER).send({ message: 'Server error' }));
+    .then((users) => res.send(users))
+    .catch(next);
 };
 
-module.exports.getUserById = (req, res) => {
-  const { id } = req.params;
-  User.findById(id)
+module.exports.getUserInfo = (req, res, next) => {
+  let userId;
+
+  if (req.params.id) {
+    userId = req.params.id;
+  } else {
+    userId = req.user._id;
+  }
+
+  User.findById(userId)
     .then((user) => {
       if (!user) {
-        res.status(ERROR_FIND).send({ message: 'User not found' });
-      } else {
-        res.send(user);
+        return next(new NotFoundError('Invalid user request data'));
       }
+      return res.status(200).send(user);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(ERROR_IMPUT).send({ message: 'Cast to ObjectId failed' });
-      } else {
-        res.status(ERROR_SERVER).send({ message: 'Server error' });
+        return next(new BadRequestError(`Cast to ObjectId failed`));
       }
+
+      if (err.name === 'DocumentNotFoundError') {
+        return next(new NotFoundError('Invalid user request data'));
+      }
+
+      return next(res);
     });
 };
 
-module.exports.createUser = (req, res) => {
-  const { name, about, avatar } = req.body;
+module.exports.createUser = (req, res, next) => {
+  const { name, about, avatar, email, password } = req.body;
 
-  User.create({ name, about, avatar })
-    .then((user) => res.send(user))
+  bcrypt
+    .hash(password, 10)
+    .then((hash) =>
+      User.create({
+        name,
+        about,
+        avatar,
+        email,
+        password: hash,
+      }),
+    )
+    .then((user) => {
+      const userObj = user.toObject();
+      delete userObj.password;
+      res.status(201).send(userObj);
+    })
     .catch((err) => {
-      if (err.name === 'ValidationError') {
-        res
-          .status(ERROR_IMPUT)
-          .send({ message: 'Incorrect data was transmitted' });
-      } else {
-        res.status(ERROR_SERVER).send({ message: 'Server error' });
+      if (err.code === 11000) {
+        return next(
+          new ConflictError('A user with such a email is already registered'),
+        );
       }
+      if (err.name === 'ValidationError') {
+        return next(new NotFoundError('Invalid user request data'));
+      }
+
+      return next(err);
     });
 };
 
-module.exports.patchUserProfile = (req, res) => {
+module.exports.patchUserProfile = (req, res, next) => {
   const id = req.user._id;
   const { name, about } = req.body;
 
@@ -54,39 +85,64 @@ module.exports.patchUserProfile = (req, res) => {
     { name, about },
     { new: true, runValidators: true },
   )
-    .then((user) => {
-      res.send(user);
-    })
+    .then((user) => res.status(200).send(user))
     .catch((err) => {
-      if (err.name === 'ValidationError') {
-        res
-          .status(ERROR_IMPUT)
-          .send({ message: 'Incorrect data was transmitted' });
-      } else {
-        res.status(ERROR_SERVER).send({ message: 'Server error' });
+      if (err.name === 'CastError') {
+        return next(new BadRequestError('Cast to ObjectId failed'));
       }
+
+      if (err.name === 'ValidationError') {
+        return next(new NotFoundError('Invalid user request data'));
+      }
+
+      return next(err);
     });
 };
 
-module.exports.patchUserAvatar = (req, res) => {
+module.exports.patchUserAvatar = (req, res, next) => {
   const id = req.user._id;
   const { avatar } = req.body;
 
   User.findByIdAndUpdate(id, { avatar }, { new: true, runValidators: true })
+    .then((user) => res.status(200).send(user))
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        return next(new BadRequestError('Cast to ObjectId failed'));
+      }
+
+      if (err.name === 'DocumentNotFoundError') {
+        return next(new NotFoundError('Invalid user request data'));
+      }
+
+      return next(err);
+    });
+};
+
+module.exports.login = (req, res, next) => {
+  const { email, password } = req.body;
+
+  return User.findOne({ email })
+    .select('+password')
     .then((user) => {
       if (!user) {
-        res.status(ERROR_FIND).send({ message: 'User not found' });
-      } else {
-        res.send(user);
+        return next(new UnauthorizedError('Incorrect email or password'));
       }
+
+      return bcrypt.compare(password, user.password).then((matched) => {
+        if (!matched) {
+          return next(new UnauthorizedError('Incorrect email or password'));
+        }
+
+        const token = jwt.sign({ _id: user._id }, 'secret-key', {
+          expiresIn: '7d',
+        });
+        res.cookie('jwt', token, {
+          maxAge: 3600000 * 24 * 7,
+          httpOnly: true,
+          sameSite: true,
+        });
+        return res.status(200).send({ token });
+      });
     })
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        res
-          .status(ERROR_IMPUT)
-          .send({ message: 'Incorrect data was transmitted' });
-      } else {
-        res.status(ERROR_SERVER).send({ message: 'Server error' });
-      }
-    });
+    .catch(next);
 };

@@ -3,15 +3,18 @@ const express = require('express');
 const mongoose = require('mongoose');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
+const { errors } = require('celebrate');
+const cookieParser = require('cookie-parser');
 const routesUsers = require('./routes/users');
 const routesCards = require('./routes/cards');
+const { BadRequestError } = require('./errors/index');
 
 const { PORT = 3000 } = process.env;
 const app = express();
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 500,
+  max: 1000,
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -20,6 +23,7 @@ app.use(limiter);
 app.use(helmet());
 
 app.use(express.json());
+app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
 mongoose
@@ -36,9 +40,9 @@ app.use(routesCards);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use((req, res) => {
-  res.status(404).send({ message: 'Not Found' });
-});
+app.use((req, res, next) => next(new BadRequestError('This page not found')));
+
+app.use(errors());
 
 app.use((err, req, res, next) => {
   const { statusCode = 500, message } = err;
@@ -46,6 +50,7 @@ app.use((err, req, res, next) => {
   res.status(statusCode).send({
     message: statusCode === 500 ? 'Server error' : message,
   });
+  return next();
 });
 
 app.listen(PORT, () => {

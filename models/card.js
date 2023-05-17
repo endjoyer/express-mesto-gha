@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 
+const urlRegex = require('../utils/regex');
+
 const cardSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -10,6 +12,10 @@ const cardSchema = new mongoose.Schema({
   link: {
     type: String,
     required: true,
+    validate: {
+      validator: (url) => urlRegex.test(url),
+      message: 'Incorrect link format',
+    },
   },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
@@ -19,7 +25,6 @@ const cardSchema = new mongoose.Schema({
   likes: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Like',
       default: [],
     },
   ],

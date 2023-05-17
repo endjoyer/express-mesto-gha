@@ -7,18 +7,35 @@ const {
   patchUserProfile,
   patchUserAvatar,
 } = require('../controllers/users');
-const auth = require('../middlewares/auth');
+const {
+  validateCreateUser,
+  validateUserInfo,
+  validatePatchUserProfile,
+  validatePatchUserAvatar,
+  validateLogin,
+} = require('../middlewares/celebrate');
+const { validateAuth } = require('../middlewares/validateAuth');
 
-router.post('/signin', login);
+router.get('/users', validateAuth, getUsers);
 
-router.get('/users', auth, getUsers);
+router.get('/users/me', validateAuth, validateUserInfo, getUserInfo);
 
-router.get('/users/me', auth, getUserInfo);
+router.post('/signup', validateCreateUser, createUser);
 
-router.post('/signup', createUser);
+router.post('/signin', validateLogin, login);
 
-router.patch('/users/me', auth, patchUserProfile);
+router.patch(
+  '/users/me',
+  validateAuth,
+  validatePatchUserProfile,
+  patchUserProfile,
+);
 
-router.patch('/users/me/avatar', auth, patchUserAvatar);
+router.patch(
+  '/users/me/avatar',
+  validateAuth,
+  validatePatchUserAvatar,
+  patchUserAvatar,
+);
 
 module.exports = router;

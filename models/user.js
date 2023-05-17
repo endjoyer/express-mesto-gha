@@ -1,6 +1,7 @@
 const { Schema, model } = require('mongoose');
-const bcrypt = require('bcryptjs');
-const isEmail = require('validator/lib/isEmail');
+const validator = require('validator');
+
+const urlRegex = require('../utils/regex');
 
 const userSchema = new Schema({
   name: {
@@ -19,13 +20,17 @@ const userSchema = new Schema({
     type: String,
     default:
       'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
+    validate: {
+      validator: (url) => urlRegex.test(url),
+      message: 'Incorrect link format',
+    },
   },
   email: {
     type: String,
     unique: true,
     required: true,
     validate: {
-      validator: (v) => isEmail(v),
+      validator: (email) => validator.isEmail(email),
       message: 'Incorrect mail format',
     },
   },
@@ -36,21 +41,5 @@ const userSchema = new Schema({
     select: false,
   },
 });
-
-userSchema.statics.findUserByCredentials = function (email, password) {
-  return this.findOne({ email }).then((user) => {
-    if (!user) {
-      return Promise.reject(new Error('Incorrect email or password'));
-    }
-
-    return bcrypt.compare(password, user.password).then((matched) => {
-      if (!matched) {
-        return Promise.reject(new Error('Incorrect email or password'));
-      }
-
-      return user;
-    });
-  });
-};
 
 module.exports = model('User', userSchema);

@@ -1,14 +1,12 @@
 const Card = require('../models/card');
-const Unauthorized = require('../errors/unauthorized');
-const BadRequest = require('../errors/bad-request');
-const NotFoundError = require('../errors/not-found-err');
+const { NotFoundError, ForbiddenError, BadRequestError } = require('../errors');
 
 const handleBadRequestError = () => {
-  throw new BadRequest('Cast to ObjectId failed');
+  throw new BadRequestError('Cast to ObjectId failed');
 };
 
-const handleNotFoundErrorError = () => {
-  throw new NotFoundError('Card not found');
+const handleNotFoundError = () => {
+  throw new NotFoundError('Invalid card request data');
 };
 
 module.exports.getCards = (req, res, next) => {
@@ -24,32 +22,36 @@ module.exports.createCard = (req, res, next) => {
     .then((card) => res.send(card))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        throw new BadRequest('Incorrect data was transmitted');
+        return next(handleNotFoundError());
       }
-    })
-    .catch(next);
+
+      return next(err);
+    });
 };
 
 module.exports.deleteCardById = (req, res, next) => {
-  const idUser = req.user._id;
-  const { id } = req.params;
-  console.log(req.params);
-  Card.findByIdAndRemove(id)
+  const UserId = req.user._id;
+  const { cardId } = req.params;
+
+  Card.findByIdAndRemove(cardId)
     .then((card) => {
       if (!card) {
-        handleNotFoundErrorError();
-      } else if (card.owner !== idUser) {
-        throw new Unauthorized('Denial of access');
-      } else {
-        res.send(card);
+        handleNotFoundError();
       }
+      if (card.owner.toString() !== UserId) {
+        return next(
+          new ForbiddenError("You can't delete someone else's picture"),
+        );
+      }
+      return card;
     })
+    .then(() => res.status(200).send({ message: 'Card deleted' }))
     .catch((err) => {
       if (err.name === 'CastError') {
         handleBadRequestError();
       }
-    })
-    .catch(next);
+      return next(err);
+    });
 };
 module.exports.likeCard = (req, res, next) => {
   const { cardId } = req.params;
@@ -60,17 +62,16 @@ module.exports.likeCard = (req, res, next) => {
   )
     .then((card) => {
       if (!card) {
-        handleNotFoundErrorError();
-      } else {
-        res.send(card);
+        handleNotFoundError();
       }
+      return res.send(card);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
         handleBadRequestError();
       }
-    })
-    .catch(next);
+      return next(err);
+    });
 };
 
 module.exports.dislikeCard = (req, res, next) => {
@@ -82,15 +83,18 @@ module.exports.dislikeCard = (req, res, next) => {
   )
     .then((card) => {
       if (!card) {
-        handleNotFoundErrorError();
-      } else {
-        res.send(card);
+        handleNotFoundError();
       }
+      return res.send(card);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
         handleBadRequestError();
       }
-    })
-    .catch(next);
+
+      if (err.name === 'ValidationError') {
+        handleNotFoundError();
+      }
+      return next(err);
+    });
 };

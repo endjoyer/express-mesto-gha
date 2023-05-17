@@ -7,7 +7,7 @@ const { errors } = require('celebrate');
 const cookieParser = require('cookie-parser');
 const routesUsers = require('./routes/users');
 const routesCards = require('./routes/cards');
-const { BadRequestError } = require('./errors/index');
+const { NotFoundError } = require('./errors/index');
 
 const { PORT = 3000 } = process.env;
 const app = express();
@@ -40,7 +40,7 @@ app.use(routesCards);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use((req, res, next) => next(new BadRequestError('This page not found')));
+app.use((req, res, next) => next(new NotFoundError('This page not found')));
 
 app.use(errors());
 

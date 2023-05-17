@@ -31,10 +31,11 @@ module.exports.createCard = (req, res, next) => {
 
 module.exports.deleteCardById = (req, res, next) => {
   const UserId = req.user._id;
-  const { cardId } = req.params;
+  const { id } = req.params;
 
-  Card.findByIdAndRemove(cardId)
+  Card.findByIdAndRemove(id)
     .then((card) => {
+      console.log(req.params);
       if (!card) {
         handleNotFoundError();
       }
@@ -43,9 +44,8 @@ module.exports.deleteCardById = (req, res, next) => {
           new ForbiddenError("You can't delete someone else's picture"),
         );
       }
-      return card;
+      return res.status(200).send(card);
     })
-    .then(() => res.status(200).send({ message: 'Card deleted' }))
     .catch((err) => {
       if (err.name === 'CastError') {
         handleBadRequestError();

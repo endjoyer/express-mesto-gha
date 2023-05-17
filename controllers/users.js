@@ -24,7 +24,12 @@ module.exports.getUserInfo = (req, res, next) => {
   }
 
   User.findById(userId)
-    .then((user) => res.status(200).send(user))
+    .then((user) => {
+      if (!user) {
+        return next(new NotFoundError('Invalid user request data'));
+      }
+      return res.status(200).send(user);
+    })
     .catch((err) => {
       if (err.name === 'CastError') {
         return next(new BadRequestError(`Cast to ObjectId failed`));

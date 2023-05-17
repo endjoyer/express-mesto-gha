@@ -18,7 +18,9 @@ const { validateAuth } = require('../middlewares/validateAuth');
 
 router.get('/users', validateAuth, getUsers);
 
-router.get('/users/me', validateAuth, validateUserInfo, getUserInfo);
+router.get('/users/me', validateAuth, getUserInfo);
+
+router.get('/users/:id', validateUserInfo, getUserInfo);
 
 router.post('/signup', validateCreateUser, createUser);
 

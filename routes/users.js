@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const {
   login,
+  exit,
   getUsers,
   createUser,
   getUserInfo,
@@ -25,6 +26,8 @@ router.get('/users/:id', validateUserInfo, getUserInfo);
 router.post('/signup', validateCreateUser, createUser);
 
 router.post('/signin', validateLogin, login);
+
+router.get('/signout', validateAuth, exit);
 
 router.patch(
   '/users/me',

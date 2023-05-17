@@ -1,14 +1,6 @@
 const Card = require('../models/card');
 const { NotFoundError, ForbiddenError, BadRequestError } = require('../errors');
 
-const handleBadRequestError = () => {
-  throw new BadRequestError('Cast to ObjectId failed');
-};
-
-const handleNotFoundError = () => {
-  throw new NotFoundError('Invalid card request data');
-};
-
 module.exports.getCards = (req, res, next) => {
   Card.find({})
     .then((cards) => res.send(cards))
@@ -22,7 +14,7 @@ module.exports.createCard = (req, res, next) => {
     .then((card) => res.send(card))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return next(handleNotFoundError());
+        return next(new BadRequestError('Invalid card request data'));
       }
 
       return next(err);
@@ -33,23 +25,23 @@ module.exports.deleteCardById = (req, res, next) => {
   const UserId = req.user._id;
   const cardId = req.params.id;
 
-  Card.findByIdAndRemove(cardId)
+  Card.findById(cardId)
     .then((card) => {
-      console.log(req.params);
       if (!card) {
-        handleNotFoundError();
+        return next(new NotFoundError(`There is no card with id "${cardId}".`));
       }
       if (card.owner.toString() !== UserId) {
         return next(
           new ForbiddenError("You can't delete someone else's picture"),
         );
       }
-      return res.status(200).send(card);
+      return Card.deleteOne()
+        .then(() => res.send({ message: 'Card deleted.' }))
+        .catch(next);
     })
     .catch((err) => {
-      console.log(err);
       if (err.name === 'CastError') {
-        handleBadRequestError();
+        return next(new BadRequestError('Cast to ObjectId failed'));
       }
       return next(err);
     });
@@ -63,13 +55,13 @@ module.exports.likeCard = (req, res, next) => {
   )
     .then((card) => {
       if (!card) {
-        handleNotFoundError();
+        return next(new NotFoundError(`There is no card with id "${cardId}"`));
       }
       return res.send(card);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        handleBadRequestError();
+        return next(new BadRequestError('Cast to ObjectId failed'));
       }
       return next(err);
     });
@@ -84,17 +76,16 @@ module.exports.dislikeCard = (req, res, next) => {
   )
     .then((card) => {
       if (!card) {
-        handleNotFoundError();
+        return next(new NotFoundError(`There is no card with id "${cardId}"`));
       }
       return res.send(card);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        handleBadRequestError();
+        return next(new BadRequestError('Cast to ObjectId failed'));
       }
-
       if (err.name === 'ValidationError') {
-        handleNotFoundError();
+        return next(new BadRequestError('Invalid card request data'));
       }
       return next(err);
     });

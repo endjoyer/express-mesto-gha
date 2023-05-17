@@ -1,23 +1,19 @@
-const path = require('path');
 const express = require('express');
 const mongoose = require('mongoose');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const { errors } = require('celebrate');
 const cookieParser = require('cookie-parser');
+const limiterSettings = require('./utils/limiterSettings');
 const routesUsers = require('./routes/users');
 const routesCards = require('./routes/cards');
 const { NotFoundError } = require('./errors/index');
+const errorMiddleware = require('./middlewares/errorMiddleware');
 
 const { PORT = 3000 } = process.env;
 const app = express();
 
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 1100,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+const limiter = rateLimit(limiterSettings);
 
 app.use(limiter);
 app.use(helmet());
@@ -38,20 +34,9 @@ mongoose
 app.use(routesUsers);
 app.use(routesCards);
 
-app.use(express.static(path.join(__dirname, 'public')));
-
 app.use((req, res, next) => next(new NotFoundError('This page not found')));
-
 app.use(errors());
-
-app.use((err, req, res, next) => {
-  const { statusCode = 500, message } = err;
-
-  res.status(statusCode).send({
-    message: statusCode === 500 ? 'Server error' : message,
-  });
-  return next();
-});
+app.use(errorMiddleware);
 
 app.listen(PORT, () => {
   console.log(`Server started on port ${PORT}`);

@@ -3,6 +3,7 @@ const { celebrate, Joi } = require('celebrate');
 const urlRegex = require('../utils/regex');
 
 const cardJoiTemplate = { cardId: Joi.string().length(24).hex().required() };
+const cardDelJoiTemplate = { id: Joi.string().length(24).hex().required() };
 
 const validateCreateUser = celebrate({
   body: Joi.object().keys({
@@ -48,7 +49,7 @@ const validateCreateCard = celebrate({
 });
 
 const validateDeleteCard = celebrate({
-  params: Joi.object().keys(cardJoiTemplate),
+  params: Joi.object().keys(cardDelJoiTemplate),
 });
 
 const validateLikeCard = celebrate({

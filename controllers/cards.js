@@ -31,10 +31,11 @@ module.exports.createCard = (req, res, next) => {
 
 module.exports.deleteCardById = (req, res, next) => {
   const UserId = req.user._id;
-  const { cardId } = req.params;
+  const cardId = req.params.id;
 
   Card.findByIdAndRemove(cardId)
     .then((card) => {
+      console.log(req.params);
       if (!card) {
         handleNotFoundError();
       }
@@ -46,6 +47,7 @@ module.exports.deleteCardById = (req, res, next) => {
       return res.status(200).send(card);
     })
     .catch((err) => {
+      console.log(err);
       if (err.name === 'CastError') {
         handleBadRequestError();
       }

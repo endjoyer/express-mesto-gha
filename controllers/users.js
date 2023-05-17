@@ -59,7 +59,6 @@ module.exports.createUser = (req, res, next) => {
     })
     .catch((err) => {
       if (err.code === 11000) {
-        console.log('[eq');
         return next(
           new ConflictError('A user with such a email is already registered'),
         );

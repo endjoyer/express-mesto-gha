@@ -35,7 +35,8 @@ module.exports.deleteCardById = (req, res, next) => {
           new ForbiddenError("You can't delete someone else's picture"),
         );
       }
-      return Card.deleteOne()
+      return card
+        .deleteOne()
         .then(() => res.send({ message: 'Card deleted.' }))
         .catch(next);
     })

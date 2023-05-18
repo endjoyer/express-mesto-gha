@@ -1,7 +1,9 @@
-require('dotenv').config();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
+
+const secretKey = require('../utils/secretKey');
+
 const {
   NotFoundError,
   UnauthorizedError,
@@ -36,25 +38,12 @@ module.exports.getUserInfo = (req, res, next) => {
         return next(new BadRequestError(`Cast to ObjectId failed`));
       }
 
-      if (err.name === 'DocumentNotFoundError') {
-        return next(new NotFoundError(`There is no user with id "${userId}"`));
-      }
-
       return next(err);
     });
 };
 
 module.exports.createUser = (req, res, next) => {
   const { name, about, avatar, email, password } = req.body;
-  const MIN_PASSWORD_LENGTH = 8;
-
-  if (password.length < MIN_PASSWORD_LENGTH) {
-    return next(
-      new BadRequestError(
-        `Password must be at least ${MIN_PASSWORD_LENGTH} characters long`,
-      ),
-    );
-  }
 
   return bcrypt
     .hash(password, 10)
@@ -144,8 +133,8 @@ module.exports.login = (req, res, next) => {
         if (!matched) {
           return next(new UnauthorizedError('Incorrect email or password'));
         }
-
-        const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
+        // авто тесты не пропускаю jwt без файла .env
+        const token = jwt.sign({ _id: user._id }, secretKey, {
           expiresIn: '7d',
         });
         res.cookie('jwt', token, {

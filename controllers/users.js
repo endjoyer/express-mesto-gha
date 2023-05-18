@@ -1,7 +1,9 @@
-require('dotenv').config();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
+
+const secretKey = require('../utils/secretKey');
+
 const {
   NotFoundError,
   UnauthorizedError,
@@ -131,8 +133,8 @@ module.exports.login = (req, res, next) => {
         if (!matched) {
           return next(new UnauthorizedError('Incorrect email or password'));
         }
-
-        const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
+        // авто тесты не пропускаю jwt без файла .env
+        const token = jwt.sign({ _id: user._id }, secretKey, {
           expiresIn: '7d',
         });
         res.cookie('jwt', token, {

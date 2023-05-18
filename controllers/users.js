@@ -36,25 +36,12 @@ module.exports.getUserInfo = (req, res, next) => {
         return next(new BadRequestError(`Cast to ObjectId failed`));
       }
 
-      if (err.name === 'DocumentNotFoundError') {
-        return next(new NotFoundError(`There is no user with id "${userId}"`));
-      }
-
       return next(err);
     });
 };
 
 module.exports.createUser = (req, res, next) => {
   const { name, about, avatar, email, password } = req.body;
-  const MIN_PASSWORD_LENGTH = 8;
-
-  if (password.length < MIN_PASSWORD_LENGTH) {
-    return next(
-      new BadRequestError(
-        `Password must be at least ${MIN_PASSWORD_LENGTH} characters long`,
-      ),
-    );
-  }
 
   return bcrypt
     .hash(password, 10)

@@ -21,7 +21,7 @@ router.get('/users', validateAuth, getUsers);
 
 router.get('/users/me', validateAuth, getUserInfo);
 
-router.get('/users/:id', validateUserInfo, getUserInfo);
+router.get('/users/:id', validateAuth, validateUserInfo, getUserInfo);
 
 router.post('/signup', validateCreateUser, createUser);
 

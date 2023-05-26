@@ -4,6 +4,8 @@
 
 _- На данный момент в проекте реализуется собственный бэкенд на NodeJS с фреймворкам и MongoDB_
 
+NodeJs v20.1.0
+
 ## Ссылка на репозиторий
 
 https://github.com/endjoyer/express-mesto-gha

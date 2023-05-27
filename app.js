@@ -9,6 +9,8 @@ const routesUsers = require('./routes/users');
 const routesCards = require('./routes/cards');
 const { NotFoundError } = require('./errors/index');
 const errorMiddleware = require('./middlewares/errorMiddleware');
+const { requestLogger, errorLogger } = require('./middlewares/logger');
+const { corsAccess } = require('./middlewares/corsAccess');
 
 const { PORT = 3000 } = process.env;
 const app = express();
@@ -31,8 +33,12 @@ mongoose
     console.error('Database connection error:', err.message);
   });
 
-app.use(routesUsers);
-app.use(routesCards);
+app.use(requestLogger);
+
+app.use(routesUsers, corsAccess);
+app.use(routesCards, corsAccess);
+
+app.use(errorLogger);
 
 app.use((req, res, next) => next(new NotFoundError('This page not found')));
 app.use(errors());

@@ -1,9 +1,0 @@
-.header__nav {
-  display: flex;
-}
-
-@media (max-width: 621px) {
-  .header__nav {
-    display: none;
-  }
-}

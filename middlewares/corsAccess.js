@@ -1,4 +1,3 @@
-// Массив доменов, с которых разрешены кросс-доменные запросы
 const allowedCors = [
   'https://endjoys.project.nomoredomains.rocks',
   'http://endjoys.project.nomoredomains.rocks',
@@ -18,5 +17,5 @@ module.exports.corsAccess = (req, res, next) => {
     res.header('Access-Control-Allow-Methods', DEFAULT_ALLOWED_METHODS);
   }
 
-  next();
+  return next();
 };

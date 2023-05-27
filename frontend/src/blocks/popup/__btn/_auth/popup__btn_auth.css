@@ -1,0 +1,11 @@
+.popup__btn_auth {
+  color: #000;
+  background: #fff;
+  margin: 216px 0 0 0;
+}
+
+@media (max-width: 621px) {
+  .popup__btn_auth {
+    margin: 173px 0 0 0;
+  }
+}

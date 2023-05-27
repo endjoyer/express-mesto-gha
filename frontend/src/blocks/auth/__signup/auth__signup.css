@@ -1,0 +1,23 @@
+.auth__signup {
+  position: absolute;
+  left: 50%;
+  bottom: 80px;
+  display: flex;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 17px;
+  justify-content: center;
+  margin: auto;
+  position: absolute;
+  left: 0;
+  bottom: 80px;
+  right: 0;
+  min-width: 430px;
+}
+
+@media (max-width: 621px) {
+  .auth__signup {
+    bottom: 75px;
+    min-width: 230px;
+  }
+}

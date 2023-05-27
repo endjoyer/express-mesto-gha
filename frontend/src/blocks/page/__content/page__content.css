@@ -1,0 +1,17 @@
+.page__content {
+  box-sizing: border-box;
+  padding: 41px 40px 0;
+  margin: 0 auto;
+}
+
+@media (max-width: 800px) {
+  .page__content {
+    padding: 35px 24px 0;
+  }
+}
+
+@media (max-width: 621px) {
+  .page__content {
+    padding: 38px 19px 0;
+  }
+}

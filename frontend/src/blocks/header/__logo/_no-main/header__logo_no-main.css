@@ -1,0 +1,9 @@
+.header__logo_no-main {
+  margin: 0 27px;
+}
+
+@media (max-width: 621px) {
+  .header__logo_no-main {
+    margin: 30px 27px;
+  }
+}

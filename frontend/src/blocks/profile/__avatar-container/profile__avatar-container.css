@@ -1,0 +1,12 @@
+.profile__avatar-container {
+  display: flex;
+  overflow: hidden;
+  position: relative;
+  min-width: 120px;
+  height: 120px;
+  border-radius: 50%;
+}
+
+.profile__avatar-container:hover .profile__edit-avatar-button {
+  display: flex;
+}

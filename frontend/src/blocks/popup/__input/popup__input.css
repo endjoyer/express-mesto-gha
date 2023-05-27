@@ -1,0 +1,13 @@
+.popup__input {
+  height: 27px;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 17px;
+  border: none;
+  outline: none;
+  border-bottom: 1px solid #0002;
+}
+
+.popup__input:focus {
+  border-bottom: 1px solid #0005;
+}

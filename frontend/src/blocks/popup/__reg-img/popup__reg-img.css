@@ -1,0 +1,13 @@
+.popup__reg-img {
+  background: url(../../../images/ok.svg) no-repeat center;
+  width: 120px;
+  height: 120px;
+  margin: 25px auto 0;
+  transition: 0.5s all;
+}
+
+@media (max-width: 621px) {
+  .popup__reg-img {
+    margin: 15px auto 0;
+  }
+}

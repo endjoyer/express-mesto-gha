@@ -1,0 +1,11 @@
+.signup__link {
+  outline: none;
+  text-decoration: none;
+  color: #fff;
+  margin: 0 0 0 5px;
+  transition: 0.3s all;
+}
+
+.signup__link:hover {
+  opacity: 0.6;
+}

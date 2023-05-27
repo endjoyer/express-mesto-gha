@@ -1,0 +1,6 @@
+.popup__title_auth {
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  margin: 0 0 50px 0;
+}

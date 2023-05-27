@@ -1,0 +1,32 @@
+.popup__btn-text_loading {
+  visibility: hidden;
+  position: relative;
+}
+
+.popup__btn-text_loading::after {
+  content: 'Сохранение';
+  visibility: visible;
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: inline-block;
+  animation: dotty steps(1, end) 1s infinite;
+}
+
+@keyframes dotty {
+  0% {
+    content: 'Сохранение';
+  }
+  25% {
+    content: 'Сохранение.';
+  }
+  50% {
+    content: 'Сохранение..';
+  }
+  75% {
+    content: 'Сохранение...';
+  }
+  100% {
+    content: 'Сохранение';
+  }
+}

@@ -1,0 +1,16 @@
+.header__logo {
+  display: block;
+  background: url('../../../images/logo.svg') 0 0 no-repeat;
+  background-size: contain;
+  margin: 0;
+  min-width: 142px;
+  min-height: 33px;
+}
+
+@media (max-width: 621px) {
+  .header__logo {
+    margin: 12px 0 30px 27px;
+    min-width: 104px;
+    min-height: 24px;
+  }
+}

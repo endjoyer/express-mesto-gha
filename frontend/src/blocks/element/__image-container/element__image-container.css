@@ -1,0 +1,8 @@
+.element__image-container {
+  min-width: 282px;
+  min-height: 282px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

@@ -1,0 +1,21 @@
+.elements__container {
+  margin: 0 auto;
+  padding: 50px 0 0;
+  list-style-type: none;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(282px, 1fr));
+  grid-template-rows: 361px;
+  gap: 17px;
+  justify-items: center;
+}
+
+@media (max-width: 621px) {
+  .elements__container {
+    gap: 19px;
+    padding: 36px 0 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+}
